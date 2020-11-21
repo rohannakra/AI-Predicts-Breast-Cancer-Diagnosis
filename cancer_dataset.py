@@ -11,6 +11,8 @@ from sklearn.manifold import TSNE
 from sklearn.metrics import recall_score
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.linear_model import Perceptron
+from sklearn.svm import SVC
+from sklearn.tree import DecisionTreeClassifier, plot_tree, export_text
 
 # Import other modules.
 import pandas as pd
@@ -51,7 +53,7 @@ data_trans = tsne.fit_transform(data)
 plt.scatter(data_trans[:, 0], data_trans[:, 1], c=target)
 
 # Apply linear model
-lin_clf = Perceptron(random_state=42)
+lin_clf = Perceptron(n_jobs=-1)
 
 lin_clf.fit(X_train, y_train)
 
@@ -59,3 +61,23 @@ print(lin_clf.score(X_train, y_train))
 print(lin_clf.score(X_test, y_test))
 
 # TODO: Print results of linear model.
+
+np.sum((data == 0)/data.size)    # -> 0.4%
+print(np.isnan(np.sum(data)))    # -> False
+
+# ------------------------------------------------------------------------------------
+
+# ! APPLY MODEL
+
+# Use Decision Tree because of interpretability.
+model = DecisionTreeClassifier(max_depth=2.5)
+
+model.fit(X_train, y_train)
+
+print(model.score(X_train, y_train))
+print(model.score(X_test, y_test))
+
+plt.figure(figsize=(15, 10))
+plot_tree(model, filled=True)
+
+print(export_text(model))
