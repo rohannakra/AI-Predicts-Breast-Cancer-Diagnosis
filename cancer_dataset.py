@@ -1,83 +1,111 @@
-# Objective: Predict if a person is bengin or malignant for breast cancer.
+# To add a new cell, type '# %%'
+# To add a new markdown cell, type '# %% [markdown]'
+# %%
+from IPython import get_ipython
 
-# -----------------------------------------------------------------------------------
+# %% [markdown]
+# ## Objective: Use different models to predict if a person is benign or malignant for breast cancer
+# %% [markdown]
+# #### Import modules and split the data
 
-# ! IMPORT MODULES AND PREPARE DATASET
-
+# %%
 # Import sklearn modules.
-from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LogisticRegression
-from sklearn.manifold import TSNE
-from sklearn.metrics import recall_score
-from sklearn.preprocessing import OneHotEncoder
-from sklearn.linear_model import Perceptron
+from sklearn.model_selection import GridSearchCV, cross_validate, train_test_split
+from sklearn.linear_model import Perceptron, LogisticRegression
 from sklearn.svm import SVC
-from sklearn.tree import DecisionTreeClassifier, plot_tree, export_text
+from sklearn.manifold import TSNE
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.neural_network import MLPClassifier
+from sklearn.metrics import confusion_matrix, recall_score
+from sklearn.decomposition import PCA
+from scipy.special import expit
 
 # Import other modules.
 import pandas as pd
 from IPython.display import display
+from time import time
 import matplotlib.pyplot as plt
 import numpy as np
-from os import path, getcwd
+from matplotlib.colors import ListedColormap
+get_ipython().run_line_magic('matplotlib', 'inline')
 
-print(getcwd())
+dataset = pd.read_csv('data.csv')
 
-dataset = pd.read_csv(path.join('Projects/Cancer Dataset', 'data.csv'))
-data = dataset.loc[:, 'radius_mean':'fractal_dimension_worst'].to_numpy()
-target = pd.get_dummies(dataset.loc[:, 'diagnosis']).loc[:, "B"].to_numpy()
+# Splitting csv file into data and target variables.
+data = dataset.loc[:, 'radius_mean':'fractal_dimension_worst']
+target = pd.get_dummies(dataset.loc[:, 'diagnosis']).loc[:, 'B']
 
-# NOTE: If sample has cancer, sample=0, else sample=1.
+data = data.to_numpy()
+target = target.to_numpy()
 
-# Split data
-print(np.bincount(target))
-X_train, X_test, y_train, y_test = train_test_split(
-    data, target,
-    stratify=target, random_state=42)
-
-print(np.bincount(y_train))
-print(np.bincount(y_test))
+X_train, X_test, y_train, y_test = train_test_split(data, target, random_state=42, stratify=target)
 
 print(X_train.shape)
 print(y_train.shape)
 print(X_test.shape)
 print(y_test.shape)
 
-# ---------------------------------------------------------------------------------------
+print(np.bincount(y_train))
+print(np.bincount(y_test))
 
-# ! CHECK IF THE DATA IS LINEAR THROUGH GRAPHING AND A LINEAR MODEL
+# %% [markdown]
+# #### Visualize the data with TSNE
 
+# %%
 tsne = TSNE(random_state=42)
+
 data_trans = tsne.fit_transform(data)
 
 plt.scatter(data_trans[:, 0], data_trans[:, 1], c=target)
 
-# Apply linear model
-lin_clf = Perceptron(n_jobs=-1)
+# %% [markdown]
+# #### Use Perceptron to check if data is linear
 
-lin_clf.fit(X_train, y_train)
+# %%
+lr_clf = Perceptron(n_jobs=-1, random_state=42)
+start_time = time()
 
-print(lin_clf.score(X_train, y_train))
-print(lin_clf.score(X_test, y_test))
+lr_clf.fit(X_train, y_train)
 
-# TODO: Print results of linear model.
+print('\n\t---------- Training Results ----------- ')
+print(f'\tTrain Score -> {lr_clf.score(X_train, y_train)* 100:.2f}%')
+print(f'\tTest Score -> {lr_clf.score(X_test, y_test) * 100:.2f}%')
+print(f'\tElapsed -> {(time() - start_time)/60:.2f} minutes')
 
-np.sum((data == 0)/data.size)    # -> 0.4%
-print(np.isnan(np.sum(data)))    # -> False
+# %% [markdown]
+# #### Use more advanced linear model
 
-# ------------------------------------------------------------------------------------
+# %%
+# Create logistic regression model.
+logreg = LogisticRegression(solver='liblinear', C=1000, n_jobs=-1, random_state=42)
 
-# ! APPLY MODEL
+# NOTE: liblinear is the best optimization algirhtm for small datasets.
 
-# Use Decision Tree because of interpretability.
-model = DecisionTreeClassifier(max_depth=2.5)
+logreg.fit(X_train, y_train)
 
-model.fit(X_train, y_train)
+print('\n\t---------- Training Results ----------- ')
+print(f'\tTrain Score -> {logreg.score(X_train, y_train)* 100:.2f}%')
+print(f'\tTest Score -> {logreg.score(X_test, y_test) * 100:.2f}%')
+print(f'\tElapsed -> {(time() - start_time)/60:.2f} minutes')
 
-print(model.score(X_train, y_train))
-print(model.score(X_test, y_test))
+# %% [markdown]
+# #### Plot the results of the new model
 
-plt.figure(figsize=(15, 10))
-plot_tree(model, filled=True)
+# %%
+pca = PCA(n_components=2)
 
-print(export_text(model))
+data_2d = pca.fit_transform(data)
+
+logreg.fit(data_2d, target)
+
+m = logreg.coef_
+b = logreg.intercept_
+loss = expit(data_2d * m + b)
+
+plt.scatter(data_2d[:, 0], data_2d[:, 1], c=target, label=target)
+plt.plot(data_2d, loss, color='red')
+
+print(logreg.score(data_2d, target))
+
+
