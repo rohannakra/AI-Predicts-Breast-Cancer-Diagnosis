@@ -90,6 +90,39 @@ print(f'\tTest Score -> {logreg.score(X_test, y_test) * 100:.2f}%')
 print(f'\tElapsed -> {(time() - start_time)/60:.2f} minutes')
 
 # %% [markdown]
+# #### Add recall score and confusion matrix
+
+# %%
+pred = logreg.predict(X_test)
+
+# confusion matrix function.
+def confusion_matrix(target, predictions):
+    matrix = []
+    for column_label in np.unique(target):
+        column = []
+        pred_label = predictions[np.where(target == column_label)]
+        
+        for label in np.unique(target):
+            column.append(sum(pred_label == label))
+        
+        matrix.append(column)
+    
+    return np.array(matrix).T
+
+matrix = confusion_matrix(y_test, pred)
+
+print(f'confusion matrix: \n{matrix}')
+
+# create recall function.
+def recall(confusion_matrix):
+    matrix = confusion_matrix    # Get underlying array.
+    true_pos = matrix[0][0]
+    false_neg = matrix[1][0]
+    return true_pos / (true_pos + false_neg)
+
+print(f'Recall score: {recall(matrix)*100:.2f}%')
+
+# %% [markdown]
 # #### Plot the results of the new model
 
 # %%
