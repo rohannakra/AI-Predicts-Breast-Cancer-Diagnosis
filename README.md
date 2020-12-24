@@ -8,6 +8,9 @@ Steps Taken:
     * ```TSNE()``` makes the data 2D for visualization purposes
 * create logistic regression model
     * train the model on the dataset
+* add scoring metrics
+    * ```confusion_matrix()```
+    * ```recall()```
 * visualize the results
     * use ```PCA()``` to make the data 2D (once again)
     * use ```coef_``` and ```intercept_``` attributes to show the decision boundary
