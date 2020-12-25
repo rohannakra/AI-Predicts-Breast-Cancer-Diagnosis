@@ -78,7 +78,12 @@ print(f'\tElapsed -> {(time() - start_time)/60:.2f} minutes')
 
 # %%
 # Create logistic regression model.
-logreg = LogisticRegression(solver='liblinear', C=1000, n_jobs=-1, random_state=42)
+logreg = LogisticRegression(
+    solver='liblinear',
+    C=1000, n_jobs=-1,
+    class_weight='balanced',
+    random_state=42
+    )
 
 # NOTE: liblinear is the best optimization algirhtm for small datasets.
 
